@@ -28,6 +28,16 @@ import (
 
 const RealityMaxShortIDLen = 8
 
+// Client version announced in the REALITY ClientHello (SessionId[0:3]).
+// Upstream hardcodes 1.8.2; servers with minClientVer set reject that and
+// silently forward the connection to the target, which surfaces as
+// "REALITY authentication failed". Track the current Xray-core release.
+const (
+	realityClientVerMajor = 26
+	realityClientVerMinor = 3
+	realityClientVerPatch = 27
+)
+
 type RealityConfig struct {
 	PublicKey *ecdh.PublicKey
 	ShortID   [RealityMaxShortIDLen]byte
@@ -71,9 +81,9 @@ func GetRealityConn(ctx context.Context, conn net.Conn, fingerprint UClientHello
 		binary.BigEndian.PutUint64(hello.SessionId, uint64(ntp.Now().Unix()))
 
 		copy(hello.SessionId[8:], realityConfig.ShortID[:])
-		hello.SessionId[0] = 1
-		hello.SessionId[1] = 8
-		hello.SessionId[2] = 2
+		hello.SessionId[0] = realityClientVerMajor
+		hello.SessionId[1] = realityClientVerMinor
+		hello.SessionId[2] = realityClientVerPatch
 
 		//log.Debugln("REALITY hello.sessionId[:16]: %v", hello.SessionId[:16])
 
